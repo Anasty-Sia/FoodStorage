@@ -26,7 +26,7 @@ class ProductViewModel(
         viewModelScope.launch {
             if (showLoading) {
                 _state.value = ProductScreenState.Loading
-            }
+
             val products = try {
                   withContext(Dispatchers.IO) {
                     getAllProductsUseCase.getAllProducts()

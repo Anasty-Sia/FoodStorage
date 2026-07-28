@@ -1,12 +1,13 @@
 package com.example.foodstorage.domain.usecase
 
 import com.example.foodstorage.domain.Product
+import com.example.foodstorage.domain.RepositoryResult
 import com.example.foodstorage.domain.repository.ProductRepository
 
 class GetAllProductsUseCase(
     private val repository: ProductRepository
 ) {
-    fun getAllProducts(): List<Product>{
+    fun getAllProducts(): RepositoryResult<List<Product>> {
         return repository.getAllProducts()
     }
 }
