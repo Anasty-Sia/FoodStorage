@@ -1,25 +1,31 @@
 package com.example.foodstorage.domain.usecase
 
 import com.example.foodstorage.domain.Product
+import com.example.foodstorage.domain.RepositoryResult
 import com.example.foodstorage.domain.repository.ProductRepository
 
 class AddProductUseCase(
     private val repository: ProductRepository
 ) {
 
-    fun addProduct(product: Product) {
-        val allProducts = repository.getAllProducts()
-        var isProductFound = false
-        for (currentProduct in allProducts) {
-            if (currentProduct.isSameProduct(product)) {
-                isProductFound = true
-                currentProduct.addQuantity(product.quantity)
-                repository.updateProduct(currentProduct)
-                break
+    fun addProduct(product: Product): RepositoryResult<Unit> {
+        val repositoryResult = repository.getAllProducts()
+        when (repositoryResult) {
+            is RepositoryResult.Success -> {
+
+                for (currentProduct in repositoryResult.result) {
+                    if (currentProduct.isSameProduct(product)) {
+                        currentProduct.addQuantity(product.quantity)
+                        return repository.updateProduct(currentProduct)
+                    }
+                }
+                return repository.saveProduct(product)
+
             }
-        }
-        if (!isProductFound) {
-            repository.saveProduct(product)
+
+            is RepositoryResult.Error -> {
+                return repositoryResult
+            }
         }
 
     }

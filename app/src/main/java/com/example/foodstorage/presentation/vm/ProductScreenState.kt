@@ -1,4 +1,4 @@
-package com.example.foodstorage.presentation.screen
+package com.example.foodstorage.presentation.vm
 
 import com.example.foodstorage.domain.Product
 

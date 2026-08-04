@@ -3,10 +3,10 @@ package com.example.foodstorage.presentation.vm
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.foodstorage.domain.Product
+import com.example.foodstorage.domain.RepositoryResult
 import com.example.foodstorage.domain.usecase.AddProductUseCase
 import com.example.foodstorage.domain.usecase.DeleteProductUseCase
 import com.example.foodstorage.domain.usecase.GetAllProductsUseCase
-import com.example.foodstorage.presentation.screen.ProductScreenState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,39 +26,64 @@ class ProductViewModel(
         viewModelScope.launch {
             if (showLoading) {
                 _state.value = ProductScreenState.Loading
+            }
 
-            val products = try {
-                  withContext(Dispatchers.IO) {
-                    getAllProductsUseCase.getAllProducts()
+            val products = withContext(Dispatchers.IO) {
+                getAllProductsUseCase.getAllProducts()
+            }
+            when (products) {
+                is RepositoryResult.Success -> {
+                    if (products.result.isEmpty()) {
+                        _state.value = ProductScreenState.Empty
+                        return@launch
+                    }
+                    _state.value = ProductScreenState.Products(products.result)
+
                 }
-            } catch (e: Exception) {
-                _state.value = ProductScreenState.Error("Не удалось загрузить список продуктов. Попробуйте ещё раз.")
-                return@launch
+
+                is RepositoryResult.Error -> {
+                    _state.value =
+                        ProductScreenState.Error("Не удалось загрузить список продуктов. Попробуйте ещё раз.")
+
+                }
             }
 
-            if (products.isEmpty()) {
-                _state.value = ProductScreenState.Empty
-                return@launch
-            }
-            _state.value = ProductScreenState.Products(products)
+
         }
     }
 
     fun addProduct(product: Product) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
+           val addResult =  withContext(Dispatchers.IO) {
                 addProductUseCase.addProduct(product)
             }
-            loadProducts(showLoading = false)
+            when(addResult){
+                is RepositoryResult.Success -> {
+                    loadProducts(showLoading = false)
+                }
+                is RepositoryResult.Error -> {
+                    _state.value = ProductScreenState.Error(addResult.message)
+                }
+            }
         }
     }
 
     fun deleteProduct(id: Int) {
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
+            val deleteResult  = withContext(Dispatchers.IO) {
                 deleteProductUseCase.deleteProduct(id)
             }
-            loadProducts(showLoading = false)
+            when (deleteResult ) {
+                is RepositoryResult.Success -> {
+                    loadProducts(showLoading = false)
+
+                }
+
+                is RepositoryResult.Error -> {
+                    _state.value = ProductScreenState.Error(deleteResult.message)
+
+                }
+            }
         }
     }
 
