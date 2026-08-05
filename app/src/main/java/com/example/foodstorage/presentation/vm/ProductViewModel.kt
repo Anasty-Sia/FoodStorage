@@ -37,7 +37,9 @@ class ProductViewModel(
                         _state.value = ProductScreenState.Empty
                         return@launch
                     }
-                    _state.value = ProductScreenState.Products(products.result)
+                    _state.value = ProductScreenState.Products(products.result,
+                        products.result.size,
+                        products.result.size)
 
                 }
 
@@ -86,5 +88,11 @@ class ProductViewModel(
             }
         }
     }
+
+    fun quantityExpiredProducts(expiredProducts: Int){
+
+
+    }
+
 
 }

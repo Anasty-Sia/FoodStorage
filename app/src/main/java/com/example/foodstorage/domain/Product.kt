@@ -19,4 +19,5 @@ data class Product(
     fun addQuantity(otherQuantity: Double){
         quantity += otherQuantity
     }
+
 }
