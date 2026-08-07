@@ -50,7 +50,7 @@ import com.example.foodstorage.ui.theme.FoodStorageTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-fun ProductsScreen(products: List<Product> = emptyList(), totalProducts: Int = 0, expiredProducts: Int = 7) {
+fun ProductsScreen(products: List<Product> = emptyList(), totalProducts: Int = 0, expiredProducts: Int = 0) {
     FoodStorageTheme() {
         Scaffold(
             topBar = {

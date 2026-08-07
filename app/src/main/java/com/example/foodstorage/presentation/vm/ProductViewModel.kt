@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.foodstorage.domain.Product
 import com.example.foodstorage.domain.RepositoryResult
 import com.example.foodstorage.domain.usecase.AddProductUseCase
+import com.example.foodstorage.domain.usecase.CountExpiredProductsUseCase
 import com.example.foodstorage.domain.usecase.DeleteProductUseCase
 import com.example.foodstorage.domain.usecase.GetAllProductsUseCase
 import kotlinx.coroutines.Dispatchers
@@ -17,10 +18,10 @@ class ProductViewModel(
     private val getAllProductsUseCase: GetAllProductsUseCase,
     private val addProductUseCase: AddProductUseCase,
     private val deleteProductUseCase: DeleteProductUseCase,
+    private val countExpiredProductsUseCase: CountExpiredProductsUseCase
 ) : ViewModel() {
     private var _state = MutableStateFlow<ProductScreenState>(ProductScreenState.Loading)
     val state: StateFlow<ProductScreenState> = _state
-
 
     fun loadProducts(showLoading: Boolean) {
         viewModelScope.launch {
@@ -30,16 +31,19 @@ class ProductViewModel(
 
             val products = withContext(Dispatchers.IO) {
                 getAllProductsUseCase.getAllProducts()
+
             }
             when (products) {
+
                 is RepositoryResult.Success -> {
                     if (products.result.isEmpty()) {
                         _state.value = ProductScreenState.Empty
                         return@launch
                     }
+                    val expiredProducts = countExpiredProductsUseCase.countExpiredProducts(products.result)
                     _state.value = ProductScreenState.Products(products.result,
                         products.result.size,
-                        products.result.size)
+                        expiredProducts)
 
                 }
 
@@ -88,11 +92,5 @@ class ProductViewModel(
             }
         }
     }
-
-    fun quantityExpiredProducts(expiredProducts: Int){
-
-
-    }
-
 
 }
