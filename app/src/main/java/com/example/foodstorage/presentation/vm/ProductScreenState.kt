@@ -2,7 +2,7 @@ package com.example.foodstorage.presentation.vm
 
 import com.example.foodstorage.domain.Product
 
-sealed class ProductScreenState {
+sealed class ProductScreenState() {
     object Loading : ProductScreenState()
     object Empty : ProductScreenState()
     data class Products(

@@ -4,44 +4,33 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import com.example.foodstorage.data.repository.ProductRepositoryImpl
+import com.example.foodstorage.domain.usecase.AddProductUseCase
+import com.example.foodstorage.domain.usecase.CountExpiredProductsUseCase
+import com.example.foodstorage.domain.usecase.DeleteProductUseCase
+import com.example.foodstorage.domain.usecase.GetAllProductsUseCase
+import com.example.foodstorage.presentation.navigation.NavHostGraph
+import com.example.foodstorage.presentation.vm.ProductViewModel
 import com.example.foodstorage.ui.theme.FoodStorageTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        val repositoryImpl = ProductRepositoryImpl()
+
+        val viewModel = ProductViewModel(
+            GetAllProductsUseCase(repositoryImpl),
+            AddProductUseCase(repositoryImpl),
+            DeleteProductUseCase(repositoryImpl),
+            CountExpiredProductsUseCase()
+        )
         setContent {
             FoodStorageTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                NavHostGraph(viewModel = viewModel)
             }
+
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    FoodStorageTheme {
-        Greeting("Android")
-    }
-}

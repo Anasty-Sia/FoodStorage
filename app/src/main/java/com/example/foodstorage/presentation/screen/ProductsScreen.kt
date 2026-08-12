@@ -1,6 +1,7 @@
 package com.example.foodstorage.presentation.screen
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -34,40 +35,73 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.foodstorage.domain.Product
-import com.example.foodstorage.ui.theme.FoodStorageTheme
+import com.example.foodstorage.presentation.vm.ProductScreenState
+import com.example.foodstorage.presentation.vm.ProductViewModel
 
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
-fun ProductsScreen(products: List<Product> = emptyList(), totalProducts: Int = 0, expiredProducts: Int = 0) {
-    FoodStorageTheme() {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text("Food Storage")
+fun ProductScreen(
+    viewModel: ProductViewModel,
+    onAdd: () -> Unit = {},
+) {
+    val state by viewModel.state.collectAsState()
+    val currentState = state
 
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.tertiary,
-                        titleContentColor = MaterialTheme.colorScheme.primary
-                    ),
-                )
-            },
-            floatingActionButton = {
+
+    LaunchedEffect(Unit) {
+        viewModel.loadProducts(showLoading = true)
+    }
+
+    val showFab = when (currentState) {
+        ProductScreenState.Empty -> {
+            true
+        }
+
+        is ProductScreenState.Products -> {
+            true
+        }
+
+        else -> {
+            false
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Food Storage",
+                        color = MaterialTheme.colorScheme.background,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.tertiary,
+                    titleContentColor = MaterialTheme.colorScheme.primary
+                ),
+            )
+        },
+
+        floatingActionButton = {
+
+            if (showFab) {
+
                 FloatingActionButton(
-                    onClick = { },
+                    onClick = onAdd,
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
@@ -76,23 +110,39 @@ fun ProductsScreen(products: List<Product> = emptyList(), totalProducts: Int = 0
                         contentDescription = "Добавить"
                     )
 
+
                 }
             }
-        ) { innerPadding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp)
-                    .padding(innerPadding)
-            ) {
-                SearchBarBlock()
-                FiltersGroup()
-                Counter(totalProducts, expiredProducts)
-                ProductsList(products)
 
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .padding(horizontal = 16.dp)
+                .padding(innerPadding)
+        ) {
 
+            when (currentState) {
+                ProductScreenState.Loading -> LoadingState()
+                ProductScreenState.Empty -> EmptyState()
+                is ProductScreenState.Products -> {
+                    SearchBarBlock()
+                    FiltersGroup()
+                    Counter(currentState.totalProducts, currentState.expiredProducts)
+                    ProductsList(currentState.products)
 
+                }
+
+                is ProductScreenState.Error -> {
+                    ErrorScreen(
+                        currentState.message,
+                        onRetry = { viewModel.loadProducts(true) })
+                }
             }
+
+
         }
     }
 }
@@ -102,7 +152,7 @@ fun ProductsList(products: List<Product>) {
     LazyColumn(
         verticalArrangement = Arrangement.spacedBy(8.dp) // отступ между элементами
     ) {
-        items(products) {product ->
+        items(products) { product ->
             ProductCard(product)
         }
     }
@@ -277,6 +327,8 @@ fun Counter(
     }
 
 }
+
+
 
 
 

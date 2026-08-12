@@ -10,33 +10,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.foodstorage.presentation.vm.ProductScreenState
-
-@Composable
-fun ProductScreen(productScreenState: ProductScreenState) {
-
-    when (productScreenState) {
-        ProductScreenState.Loading -> LoadingState()
-        ProductScreenState.Empty -> EmptyState()
-        is ProductScreenState.Products -> ProductsScreen(
-            productScreenState.products,
-            productScreenState.totalProducts,
-            productScreenState.expiredProducts)
-        is ProductScreenState.Error -> ErrorScreen(
-            productScreenState.message)
-    }
-
-}
-
-@Composable
-fun ErrorScreen(message: String) {
-    TODO("Not yet implemented")
-}
-
-@Composable
-fun EmptyState() {
-    TODO("Not yet implemented")
-}
 
 @Preview
 @Composable
@@ -52,4 +25,3 @@ fun LoadingState() {
         )
     }
 }
-
