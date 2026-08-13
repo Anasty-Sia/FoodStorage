@@ -65,6 +65,7 @@ class ProductViewModel(
             }
             when(addResult){
                 is RepositoryResult.Success -> {
+
                     loadProducts(showLoading = false)
                 }
                 is RepositoryResult.Error -> {

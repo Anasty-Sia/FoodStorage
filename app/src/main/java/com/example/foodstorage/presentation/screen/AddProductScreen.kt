@@ -33,26 +33,29 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.foodstorage.domain.Product
 import com.example.foodstorage.ui.theme.FoodStorageTheme
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
 fun AddProductScreen(
-    selectedLocation: String = "",
-    onLocationChange: (String) -> Unit = {},
-    onSave: () -> Unit = {},
-    onBack: () -> Unit = {}
-
-) {
+    selectedLocation: String,
+    onLocationChange: (String) -> Unit,
+    onSave: (Product) -> Unit = {},
+    onBack: () -> Unit = {},
+    ) {
 
     var productName by remember { mutableStateOf("") }
     var productQuantity by remember { mutableStateOf("") }
     var productShelfLife by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
-    val options = listOf("Холодильник", "Полка")
+    val options =  listOf("Холодильник", "Полка")
+    lateinit var productShelfLifeLD: LocalDate
+    val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
     FoodStorageTheme() {
         Scaffold(
@@ -94,7 +97,7 @@ fun AddProductScreen(
             ) {
 
                 OutlinedTextField(
-                    value = productName ,
+                    value = productName,
                     onValueChange = { productName = it },
                     label = { Text("Название продукта") },
                     placeholder = { Text("Введите название продукта") },
@@ -128,11 +131,12 @@ fun AddProductScreen(
                         label = { Text("Количество") },
                         placeholder = { Text("Введите количество продукта") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.weight(0.5f)
+                        modifier = Modifier
+                            .weight(0.5f)
                             .padding(end = 8.dp),
-                        singleLine = true
+                        singleLine = true,
 
-                    )
+                        )
 
                     OutlinedTextField(
                         value = productShelfLife,
@@ -199,13 +203,61 @@ fun AddProductScreen(
                     }
                 }
 
-                Button( onClick = onSave,
-                    modifier = Modifier.padding(8.dp)) {
+
+                Button(
+
+                    onClick = {
+
+                        if (productName.isBlank()) {
+                            Error("Заполните название")
+                            return@Button
+                        }
+
+                        val productQuantityDouble = productQuantity.toDoubleOrNull()
+                        if (productQuantity.isBlank() || productQuantityDouble == null
+                            || productQuantityDouble <= 0
+                        ) {
+                            Error("Введите кол-во ")
+                            return@Button
+                        }
+
+                        if (productShelfLife.isBlank()) {
+                            Error("Заполните срок годности")
+                            return@Button
+                        } else {
+                            productShelfLifeLD = try {
+                                LocalDate.parse(productShelfLife, formatter)
+                            } catch (e: DateTimeParseException) {
+                                Error("Заполните дату в формате дд.мм.гггг")
+                                return@Button
+                            }
+                        }
+
+                        if (selectedLocation.isBlank()) {
+                            Error("Выберите место хранения")
+                            return@Button
+                        }
+
+                        onSave(
+                            Product(
+                                0,
+                                name = productName,
+                                quantity = productQuantityDouble,
+                                storagePlace = selectedLocation,
+                                shelfLife = productShelfLifeLD
+                            )
+                        )
+                    },
+                    modifier = Modifier.padding(8.dp)
+                ) {
                     Text("Сохранить")
+
                 }
 
             }
         }
     }
 
+
 }
+
