@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import com.example.foodstorage.data.database.DatabaseProvider
+import com.example.foodstorage.data.mapper.ProductMapper
 import com.example.foodstorage.data.repository.ProductRepositoryImpl
 import com.example.foodstorage.domain.usecase.AddProductUseCase
 import com.example.foodstorage.domain.usecase.CountExpiredProductsUseCase
@@ -17,7 +19,14 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val repositoryImpl = ProductRepositoryImpl()
+
+        val database = DatabaseProvider.createDatabase(context)
+
+        val dao = database.productDao()
+        val repositoryImpl = ProductRepositoryImpl(
+            dao = dao,
+            mapper = ProductMapper()
+        )
 
         val viewModel = ProductViewModel(
             GetAllProductsUseCase(repositoryImpl),

@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.foodstorage.presentation.screen.AddProductScreen
 import com.example.foodstorage.presentation.screen.ProductScreen
+import com.example.foodstorage.presentation.vm.ProductEvent
 import com.example.foodstorage.presentation.vm.ProductViewModel
 
 @Composable
@@ -25,6 +26,17 @@ fun NavHostGraph(viewModel: ProductViewModel) {
         }
 
         composable(Routes.ADD_PRODUCTS) {
+
+            LaunchedEffect(Unit) {
+                viewModel.sharedFlow.collect {event ->
+                    when(event){
+                        ProductEvent.ProductSaved -> {
+                            navController.popBackStack()
+                        }
+                    }
+
+                }
+            }
             AddProductScreen(
                 onSave = { product -> viewModel.addProduct(product) },
                 onBack = { navController.popBackStack() },

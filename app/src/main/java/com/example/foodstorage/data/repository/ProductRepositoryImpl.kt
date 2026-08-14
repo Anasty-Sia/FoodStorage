@@ -1,37 +1,49 @@
 package com.example.foodstorage.data.repository
 
+import com.example.foodstorage.data.database.ProductDao
+import com.example.foodstorage.data.mapper.ProductMapper
 import com.example.foodstorage.domain.Product
 import com.example.foodstorage.domain.RepositoryResult
 import com.example.foodstorage.domain.repository.ProductRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 
-class ProductRepositoryImpl : ProductRepository {
+class ProductRepositoryImpl(
+    private val dao: ProductDao,
+    private val mapper: ProductMapper
+) : ProductRepository {
 
-    private val products = mutableListOf<Product>()
 
-    override fun getAllProducts(): RepositoryResult<List<Product>> {
-        return RepositoryResult.Success(products)
-    }
+    override suspend fun saveProduct(product: Product): RepositoryResult<Unit> {
 
-    override fun saveProduct(product: Product): RepositoryResult<Unit> {
-        products.add(product)
+        val entity = mapper.toEntity(product)
+        dao.insert(entity)
         return RepositoryResult.Success(Unit)
 
     }
 
-    override fun deleteProduct(id: Int): RepositoryResult<Unit> {
-
-        val product = products.find {
-            it.id == id
+    override fun getAllProducts(): Flow<List<Product>> {
+        return dao.getAll().map { entities ->
+            entities.map { entity ->
+                mapper.toDomain(entity)
+            }
         }
-        if(product == null){
-            return RepositoryResult.Error("Продукт не найден")
-        }
-        products.remove(product)
-        return RepositoryResult.Success(Unit)
     }
 
-    override fun updateProduct(product: Product): RepositoryResult<Unit> {
-       TODO()
+    override suspend fun deleteProduct(id: Int): RepositoryResult<Unit> {
+        val deleteRows = dao.delete(id)
+        return if (deleteRows == 0) {
+            RepositoryResult.Error("Продукт не найден")
+
+        } else {
+            RepositoryResult.Success(Unit)
+        }
+
+    }
+
+    override suspend fun updateProduct(product: Product): RepositoryResult<Unit> {
+        dao.update(mapper.toEntity(product))
+        return RepositoryResult.Success(Unit)
     }
 }

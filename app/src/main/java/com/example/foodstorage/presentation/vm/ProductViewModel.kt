@@ -9,7 +9,9 @@ import com.example.foodstorage.domain.usecase.CountExpiredProductsUseCase
 import com.example.foodstorage.domain.usecase.DeleteProductUseCase
 import com.example.foodstorage.domain.usecase.GetAllProductsUseCase
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -22,6 +24,9 @@ class ProductViewModel(
 ) : ViewModel() {
     private var _state = MutableStateFlow<ProductScreenState>(ProductScreenState.Loading)
     val state: StateFlow<ProductScreenState> = _state
+
+    private var _sharedFlow = MutableSharedFlow<ProductEvent>()
+    val sharedFlow: SharedFlow<ProductEvent> = _sharedFlow
 
     fun loadProducts(showLoading: Boolean) {
         viewModelScope.launch {
@@ -65,8 +70,7 @@ class ProductViewModel(
             }
             when(addResult){
                 is RepositoryResult.Success -> {
-
-                    loadProducts(showLoading = false)
+                    _sharedFlow.emit(ProductEvent.ProductSaved)
                 }
                 is RepositoryResult.Error -> {
                     _state.value = ProductScreenState.Error(addResult.message)
