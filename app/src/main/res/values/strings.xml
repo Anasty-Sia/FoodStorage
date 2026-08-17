@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FoodStorage</string>
+    <string name="app_name">Food Storage</string>
 
     <string name="no_products">У вас пока нет продуктов</string>
     <string name="no_products_description">Нажмите на кнопку + ниже, чтобы создать свой первый продукт</string>

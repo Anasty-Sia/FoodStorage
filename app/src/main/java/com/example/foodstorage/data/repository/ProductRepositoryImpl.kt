@@ -7,9 +7,10 @@ import com.example.foodstorage.domain.RepositoryResult
 import com.example.foodstorage.domain.repository.ProductRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import javax.inject.Inject
 
 
-class ProductRepositoryImpl(
+class ProductRepositoryImpl @Inject constructor(
     private val dao: ProductDao,
     private val mapper: ProductMapper
 ) : ProductRepository {
@@ -31,6 +32,13 @@ class ProductRepositoryImpl(
         }
     }
 
+    override suspend fun getProductsOnce(): List<Product> {
+
+        return dao.getProductsOnce().map {entity ->
+            mapper.toDomain(entity)
+        }
+    }
+
     override suspend fun deleteProduct(id: Int): RepositoryResult<Unit> {
         val deleteRows = dao.delete(id)
         return if (deleteRows == 0) {
@@ -46,4 +54,5 @@ class ProductRepositoryImpl(
         dao.update(mapper.toEntity(product))
         return RepositoryResult.Success(Unit)
     }
+
 }

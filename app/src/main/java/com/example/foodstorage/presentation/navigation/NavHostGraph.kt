@@ -10,9 +10,12 @@ import com.example.foodstorage.presentation.screen.AddProductScreen
 import com.example.foodstorage.presentation.screen.ProductScreen
 import com.example.foodstorage.presentation.vm.ProductEvent
 import com.example.foodstorage.presentation.vm.ProductViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun NavHostGraph(viewModel: ProductViewModel) {
+fun NavHostGraph() {
+    val viewModel = hiltViewModel<ProductViewModel>()
+
     val navController = rememberNavController()
     var selectedLocation by remember { mutableStateOf("") }
 

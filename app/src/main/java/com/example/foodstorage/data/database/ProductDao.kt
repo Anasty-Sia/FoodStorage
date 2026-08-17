@@ -14,6 +14,10 @@ interface ProductDao {
     @Query("SELECT * FROM products ORDER BY id DESC")
     fun getAll(): Flow<List<ProductEntity>>
 
+    @Query("SELECT * FROM products")
+    suspend fun getProductsOnce(): List<ProductEntity>
+
+
     @Update
     suspend fun update(product: ProductEntity)
 

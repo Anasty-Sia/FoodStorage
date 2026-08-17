@@ -254,7 +254,7 @@ fun ProductCard(product: Product) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(bottom = 8.dp),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
@@ -273,23 +273,26 @@ fun ProductCard(product: Product) {
                 )
 
                 Text(
-                    text = "${product.quantity}",
+                    text = "${product.storagePlace}",
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
 
                 ) {
+
                 Text(
-                    text = "${product.storagePlace}",
+                    text = "${product.quantity}",
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+
                 Text(
                     text = " До: ${product.shelfLife}",
                     style = MaterialTheme.typography.titleMedium,

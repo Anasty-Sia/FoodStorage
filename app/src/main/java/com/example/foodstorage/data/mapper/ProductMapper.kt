@@ -2,9 +2,10 @@ package com.example.foodstorage.data.mapper
 
 import com.example.foodstorage.data.database.ProductEntity
 import com.example.foodstorage.domain.Product
+import javax.inject.Inject
 
 
-class ProductMapper {
+class ProductMapper @Inject constructor(){
 
     fun toEntity(product: Product): ProductEntity{
         return ProductEntity(
