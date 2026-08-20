@@ -15,11 +15,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            FoodStorageTheme() {
+            FoodStorageTheme{
                 NavHostGraph()
             }
-
-
         }
     }
 }

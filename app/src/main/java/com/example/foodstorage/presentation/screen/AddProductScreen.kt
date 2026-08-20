@@ -1,5 +1,7 @@
 package com.example.foodstorage.presentation.screen
 
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +34,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.foodstorage.domain.Product
@@ -40,6 +43,9 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
+private val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+private val options = listOf("Холодильник", "Полка")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductScreen(
@@ -47,17 +53,16 @@ fun AddProductScreen(
     onLocationChange: (String) -> Unit,
     onSave: (Product) -> Unit = {},
     onBack: () -> Unit = {},
-    ) {
+) {
 
     var productName by remember { mutableStateOf("") }
     var productQuantity by remember { mutableStateOf("") }
     var productShelfLife by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
-    val options =  listOf("Холодильник", "Полка")
-    lateinit var productShelfLifeLD: LocalDate
-    val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 
-    FoodStorageTheme() {
+    val context = LocalContext.current
+
+    FoodStorageTheme{
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -132,7 +137,7 @@ fun AddProductScreen(
                         placeholder = { Text("Введите количество продукта") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier
-                            .weight(0.5f)
+                            .weight(0.4f)
                             .padding(end = 8.dp),
                         singleLine = true,
 
@@ -142,9 +147,9 @@ fun AddProductScreen(
                         value = productShelfLife,
                         onValueChange = { productShelfLife = it },
                         label = { Text("Срок годности") },
-                        placeholder = { Text("Введите срок годности продукта") },
+                        placeholder = { Text("В формате дд.мм.гггг") },
                         modifier = Modifier
-                            .weight(0.5f),
+                            .weight(0.6f),
                         singleLine = true
 
                     )
@@ -209,7 +214,7 @@ fun AddProductScreen(
                     onClick = {
 
                         if (productName.isBlank()) {
-                            Error("Заполните название")
+                            displayToast(context, "Заполните название продукта")
                             return@Button
                         }
 
@@ -217,26 +222,29 @@ fun AddProductScreen(
                         if (productQuantity.isBlank() || productQuantityDouble == null
                             || productQuantityDouble <= 0
                         ) {
-                            Error("Введите кол-во ")
+                            displayToast(context, "Введите количество")
                             return@Button
                         }
 
+                        var productShelfLifeLD: LocalDate
+
                         if (productShelfLife.isBlank()) {
-                            Error("Заполните срок годности")
+                            displayToast(context, "Введите срок годности")
                             return@Button
                         } else {
                             productShelfLifeLD = try {
                                 LocalDate.parse(productShelfLife, formatter)
                             } catch (e: DateTimeParseException) {
-                                Error("Заполните дату в формате дд.мм.гггг")
+                                displayToast(context, "Заполните дату в формате дд.мм.гггг")
                                 return@Button
                             }
                         }
 
                         if (selectedLocation.isBlank()) {
-                            Error("Выберите место хранения")
+                            displayToast(context, "Выберите место хранения")
                             return@Button
                         }
+
 
                         onSave(
                             Product(
@@ -246,6 +254,7 @@ fun AddProductScreen(
                                 storagePlace = selectedLocation,
                                 shelfLife = productShelfLifeLD
                             )
+
                         )
                     },
                     modifier = Modifier.padding(8.dp)
@@ -261,3 +270,6 @@ fun AddProductScreen(
 
 }
 
+private fun displayToast(context: Context, text: String) {
+    Toast.makeText(context, text, Toast.LENGTH_LONG).show()
+}

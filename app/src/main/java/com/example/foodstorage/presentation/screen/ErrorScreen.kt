@@ -15,16 +15,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.foodstorage.R
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Preview
 @Composable
 fun ErrorScreen(
-    message: String = "Ошибка",
-    onRetry: () -> Unit = {}
+    message: String,
+    onRetry: () -> Unit
 ) {
 
             Column(

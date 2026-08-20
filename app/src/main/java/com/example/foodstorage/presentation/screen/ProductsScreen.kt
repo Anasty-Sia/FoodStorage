@@ -48,13 +48,12 @@ import com.example.foodstorage.domain.Product
 import com.example.foodstorage.presentation.vm.ProductScreenState
 import com.example.foodstorage.presentation.vm.ProductViewModel
 
-
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProductScreen(
     viewModel: ProductViewModel,
-    onAdd: () -> Unit = {},
+    onAdd: () -> Unit,
 ) {
     val state by viewModel.state.collectAsState()
     val currentState = state
@@ -70,6 +69,10 @@ fun ProductScreen(
         }
 
         is ProductScreenState.Products -> {
+            true
+        }
+
+        is ProductScreenState.EmptyFilter -> {
             true
         }
 
@@ -109,8 +112,6 @@ fun ProductScreen(
                         Icons.Filled.Add,
                         contentDescription = "Добавить"
                     )
-
-
                 }
             }
 
@@ -123,16 +124,23 @@ fun ProductScreen(
                 .padding(horizontal = 16.dp)
                 .padding(innerPadding)
         ) {
+            SearchBarBlock()
+
+            FiltersGroup(
+                onSelectionChange = { filter ->
+                    viewModel.filterStoragePlace(filter)
+                }
+            )
 
             when (currentState) {
                 ProductScreenState.Loading -> LoadingState()
                 ProductScreenState.Empty -> EmptyState()
+                ProductScreenState.EmptyFilter -> EmptyFilterState()
+
+
                 is ProductScreenState.Products -> {
-                    SearchBarBlock()
-                    FiltersGroup()
                     Counter(currentState.totalProducts, currentState.expiredProducts)
                     ProductsList(currentState.products)
-
                 }
 
                 is ProductScreenState.Error -> {
@@ -140,8 +148,8 @@ fun ProductScreen(
                         currentState.message,
                         onRetry = { viewModel.loadProducts(true) })
                 }
-            }
 
+            }
 
         }
     }
@@ -150,7 +158,7 @@ fun ProductScreen(
 @Composable
 fun ProductsList(products: List<Product>) {
     LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(8.dp) // отступ между элементами
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         items(products) { product ->
             ProductCard(product)
@@ -195,9 +203,10 @@ fun SearchBarBlock() {
     )
 }
 
-
 @Composable
-fun FiltersGroup() {
+fun FiltersGroup(
+    onSelectionChange: (String) -> Unit
+) {
     var selectedFilter by remember { mutableStateOf("Все") }
 
     FlowRow(
@@ -210,6 +219,7 @@ fun FiltersGroup() {
                 selected = filter == selectedFilter,
                 onClick = {
                     selectedFilter = filter
+                    onSelectionChange(filter)
                 },
                 label = { Text(filter) },
                 leadingIcon =
@@ -302,9 +312,11 @@ fun ProductCard(product: Product) {
 
             }
 
+
         }
 
     }
+
 
 }
 
@@ -328,6 +340,7 @@ fun Counter(
             text = "Просрочено: $expiredProducts"
         )
     }
+
 
 }
 

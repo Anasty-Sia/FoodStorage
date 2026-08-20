@@ -13,6 +13,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -23,39 +24,30 @@ import com.example.foodstorage.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
-fun EmptyState() {
+fun EmptyFilterState() {
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Image(
             modifier = Modifier
                 .fillMaxWidth(),
-            painter = painterResource(R.drawable.list_empty),
+            painter = painterResource(R.drawable.filter),
             contentDescription = null,
+            contentScale = ContentScale.Fit,
 
             )
         Text(
             modifier = Modifier.padding(top = 8.dp),
-            text = stringResource(R.string.no_products),
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.primary,
-            textAlign = TextAlign.Center
-        )
-        Text(
-            modifier = Modifier.padding(top = 8.dp),
-            text = stringResource(R.string.no_products_description),
+            text = stringResource(R.string.no_products_filter),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary,
             textAlign = TextAlign.Center
         )
-
     }
-
-
 }

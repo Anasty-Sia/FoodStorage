@@ -1,8 +1,10 @@
 package com.example.foodstorage.presentation.navigation
 
+import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -18,6 +20,7 @@ fun NavHostGraph() {
 
     val navController = rememberNavController()
     var selectedLocation by remember { mutableStateOf("") }
+    val  context = LocalContext.current
 
     NavHost(
     navController = navController,
@@ -26,6 +29,7 @@ fun NavHostGraph() {
         composable(Routes.PRODUCT) {
             ProductScreen(viewModel = viewModel,
                 onAdd = {navController.navigate(Routes.ADD_PRODUCTS)})
+
         }
 
         composable(Routes.ADD_PRODUCTS) {
@@ -34,8 +38,10 @@ fun NavHostGraph() {
                 viewModel.sharedFlow.collect {event ->
                     when(event){
                         ProductEvent.ProductSaved -> {
+                            Toast.makeText(context, "Продукт сохранен", Toast.LENGTH_LONG).show()
                             navController.popBackStack()
                         }
+
                     }
 
                 }
