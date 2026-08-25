@@ -43,13 +43,14 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 
+
 private val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
 private val options = listOf("Холодильник", "Полка")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductScreen(
-    selectedLocation: String,
+    selectedLocation: String = "",
     onLocationChange: (String) -> Unit,
     onSave: (Product) -> Unit = {},
     onBack: () -> Unit = {},
@@ -62,7 +63,7 @@ fun AddProductScreen(
 
     val context = LocalContext.current
 
-    FoodStorageTheme{
+    FoodStorageTheme {
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -106,6 +107,7 @@ fun AddProductScreen(
                     onValueChange = { productName = it },
                     label = { Text("Название продукта") },
                     placeholder = { Text("Введите название продукта") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 8.dp),
@@ -148,6 +150,7 @@ fun AddProductScreen(
                         onValueChange = { productShelfLife = it },
                         label = { Text("Срок годности") },
                         placeholder = { Text("В формате дд.мм.гггг") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier
                             .weight(0.6f),
                         singleLine = true
@@ -172,7 +175,9 @@ fun AddProductScreen(
                     ExposedDropdownMenuBox(
                         expanded = expanded,
                         onExpandedChange = { expanded = it },
-                    ) {
+
+
+                        ) {
                         OutlinedTextField(
                             value = selectedLocation,
                             onValueChange = {},
@@ -193,13 +198,26 @@ fun AddProductScreen(
                         ExposedDropdownMenu(
                             expanded = expanded,
                             onDismissRequest = { expanded = false },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    color = MaterialTheme.colorScheme.tertiary
+                                ),
                         ) {
                             options.forEach { option ->
                                 DropdownMenuItem(
-                                    text = { Text(option) },
+                                    text = {
+                                        Text(
+                                            option,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            color = MaterialTheme.colorScheme.background,
+                                        )
+                                    },
+
+
                                     onClick = {
                                         onLocationChange(option)
+
                                         expanded = false
                                     }
                                 )
@@ -227,18 +245,29 @@ fun AddProductScreen(
                         }
 
                         var productShelfLifeLD: LocalDate
+                        val today = LocalDate.now()
 
                         if (productShelfLife.isBlank()) {
                             displayToast(context, "Введите срок годности")
                             return@Button
+
                         } else {
                             productShelfLifeLD = try {
+
                                 LocalDate.parse(productShelfLife, formatter)
+
                             } catch (e: DateTimeParseException) {
                                 displayToast(context, "Заполните дату в формате дд.мм.гггг")
                                 return@Button
                             }
                         }
+
+                        if (productShelfLifeLD <= today) {
+
+                            displayToast(context, "Проверьте срок годности")
+                            return@Button
+                        }
+
 
                         if (selectedLocation.isBlank()) {
                             displayToast(context, "Выберите место хранения")
@@ -257,7 +286,9 @@ fun AddProductScreen(
 
                         )
                     },
-                    modifier = Modifier.padding(8.dp)
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .padding(top = 16.dp)
                 ) {
                     Text("Сохранить")
 
@@ -271,5 +302,5 @@ fun AddProductScreen(
 }
 
 private fun displayToast(context: Context, text: String) {
-    Toast.makeText(context, text, Toast.LENGTH_LONG).show()
+    Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
 }

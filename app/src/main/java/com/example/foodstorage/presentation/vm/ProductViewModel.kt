@@ -1,5 +1,6 @@
 package com.example.foodstorage.presentation.vm
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.foodstorage.domain.Product
@@ -8,7 +9,6 @@ import com.example.foodstorage.domain.usecase.AddProductUseCase
 import com.example.foodstorage.domain.usecase.CountExpiredProductsUseCase
 import com.example.foodstorage.domain.usecase.DeleteProductUseCase
 import com.example.foodstorage.domain.usecase.GetAllProductsUseCase
-import com.example.foodstorage.domain.usecase.GetProductsOnceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,7 +22,6 @@ import javax.inject.Inject
 @HiltViewModel
 class ProductViewModel @Inject constructor(
     private val getAllProductsUseCase: GetAllProductsUseCase,
-    private val getProductsOneUseCase: GetProductsOnceUseCase,
     private val addProductUseCase: AddProductUseCase,
     private val deleteProductUseCase: DeleteProductUseCase,
     private val countExpiredProductsUseCase: CountExpiredProductsUseCase
@@ -35,6 +34,11 @@ class ProductViewModel @Inject constructor(
 
     private var isSaving = false
 
+    private var allProducts = emptyList<Product>()
+
+    private val _selectedFilter = MutableStateFlow(STORAGE_PLACE_ALL)
+    val selectedFilter: StateFlow<String> = _selectedFilter
+
 
     fun loadProducts(showLoading: Boolean) {
         viewModelScope.launch {
@@ -45,19 +49,14 @@ class ProductViewModel @Inject constructor(
 
             try {
                 getAllProductsUseCase.getAllProducts().collect { products ->
+                    allProducts = products
+                    Log.d("ALL","allProducts обновился: $allProducts")
                     if (products.isEmpty()) {
 
                         _state.value = ProductScreenState.Empty
 
                     } else {
-                        val expiredProducts =
-                            countExpiredProductsUseCase.countExpiredProducts(products)
-                        _state.value = ProductScreenState.Products(
-                            products,
-                            products.size,
-                            expiredProducts
-                        )
-
+                        updateFilter(selectedFilter.value)
                     }
                 }
 
@@ -81,7 +80,6 @@ class ProductViewModel @Inject constructor(
                 is RepositoryResult.Success -> {
                     isSaving = false
                     _sharedFlow.emit(ProductEvent.ProductSaved)
-
                 }
 
                 is RepositoryResult.Error -> {
@@ -95,13 +93,13 @@ class ProductViewModel @Inject constructor(
     }
 
     fun deleteProduct(id: Int) {
+
         viewModelScope.launch {
             val deleteResult = withContext(Dispatchers.IO) {
                 deleteProductUseCase.deleteProduct(id)
             }
             when (deleteResult) {
                 is RepositoryResult.Success -> {
-
                 }
 
                 is RepositoryResult.Error -> {
@@ -112,30 +110,33 @@ class ProductViewModel @Inject constructor(
         }
     }
 
-    fun filterStoragePlace(storagePlace: String) {
-        viewModelScope.launch {
+    fun updateFilter(filter: String){
 
-            val allProduct = withContext(Dispatchers.IO) {
-                getProductsOneUseCase.getProductsOne()
+        _selectedFilter.value = filter
+        filterStoragePlace(filter)
+    }
+
+
+    fun filterStoragePlace(storagePlace: String) {
+
+        when (storagePlace) {
+
+            STORAGE_PLACE_ALL -> {
+                productsList(allProducts)
             }
 
+            STORAGE_PLACE_FRIDGE -> {
+                val filterPlaceFridge =
+                    allProducts.filter { it.storagePlace == STORAGE_PLACE_FRIDGE }
+                productsList(filterPlaceFridge)
 
-            when (storagePlace) {
-                STORAGE_PLACE_ALL -> {
-                    productsList(allProduct)
-                }
 
-                STORAGE_PLACE_FRIDGE -> {
-                    val filterPlaceFridge =
-                        allProduct.filter { it.storagePlace == STORAGE_PLACE_FRIDGE }
-                    productsList(filterPlaceFridge)
-                }
+            }
 
-                STORAGE_PLACE_SHELF -> {
-                    val filterPlaceShelf =
-                        allProduct.filter { it.storagePlace == STORAGE_PLACE_SHELF }
-                    productsList(filterPlaceShelf)
-                }
+            STORAGE_PLACE_SHELF -> {
+                val filterPlaceShelf =
+                    allProducts.filter { it.storagePlace == STORAGE_PLACE_SHELF }
+                productsList(filterPlaceShelf)
             }
         }
     }
@@ -143,7 +144,6 @@ class ProductViewModel @Inject constructor(
 
     fun productsList(list: List<Product>) {
         if (list.isEmpty()) {
-
             _state.value = ProductScreenState.EmptyFilter
 
         } else {

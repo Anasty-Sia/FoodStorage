@@ -24,4 +24,5 @@ fun LoadingState() {
             color = MaterialTheme.colorScheme.primary
         )
     }
+
 }
