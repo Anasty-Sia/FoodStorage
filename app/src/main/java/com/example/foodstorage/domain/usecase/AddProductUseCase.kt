@@ -1,26 +1,21 @@
 package com.example.foodstorage.domain.usecase
 
 import com.example.foodstorage.domain.Product
+import com.example.foodstorage.domain.RepositoryResult
 import com.example.foodstorage.domain.repository.ProductRepository
+import javax.inject.Inject
 
-class AddProductUseCase(
+class AddProductUseCase @Inject constructor(
     private val repository: ProductRepository
 ) {
-
-    fun addProduct(product: Product) {
-        val allProducts = repository.getAllProducts()
-        var isProductFound = false
-        for (currentProduct in allProducts) {
+    suspend fun addProduct(product: Product): RepositoryResult<Unit> {
+        val products = repository.getProductsOnce()
+        for (currentProduct in products) {
             if (currentProduct.isSameProduct(product)) {
-                isProductFound = true
                 currentProduct.addQuantity(product.quantity)
-                repository.updateProduct(currentProduct)
-                break
+                return repository.updateProduct(currentProduct)
             }
         }
-        if (!isProductFound) {
-            repository.saveProduct(product)
-        }
-
+        return repository.saveProduct(product)
     }
 }

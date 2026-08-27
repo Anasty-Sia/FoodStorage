@@ -4,7 +4,7 @@ import java.time.LocalDate
 
 data class Product(
     val id: Int,
-    var name: String,
+    val name: String,
     var quantity: Double,
     val storagePlace: String,
     val shelfLife: LocalDate,
@@ -19,4 +19,5 @@ data class Product(
     fun addQuantity(otherQuantity: Double){
         quantity += otherQuantity
     }
+
 }

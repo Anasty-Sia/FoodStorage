@@ -2,10 +2,28 @@ package com.example.foodstorage.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val PrimaryLight = Color(0xFF00B8C4)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+val PrimaryDark = Color(0xFF4DD0E1)
+
+val SecondaryLight = Color(0xFF7FD8DE)
+
+val SecondaryDark = Color(0xFF80DEEA)
+
+val BackgroundLight = Color(0xFFFFFFFF)
+
+val BackgroundDark = Color(0xFF121A1C)
+
+val SurfaceLight = Color(0xFFF5FAFB)
+
+val SurfaceDark = Color(0xFF1E2A2D)
+
+val ErrorLight = Color(0xFFD32F2F)
+
+val ErrorDark = Color(0xFFEF5350)
+
+val FreshColor = Color(0xFF4CAF50)
+
+val WarningColor = Color(0xFFFFC107)
+
+val ExpiredColor = Color(0xFFE53935)
