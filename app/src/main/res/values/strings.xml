@@ -3,5 +3,6 @@
 
     <string name="no_products">У вас пока нет продуктов</string>
     <string name="no_products_filter">По данному фильтру ничего не найдено</string>
+    <string name="no_products_search">Ничего не найдено</string>
     <string name="no_products_description">Нажмите на кнопку + ниже, чтобы создать свой первый продукт</string>
 </resources>

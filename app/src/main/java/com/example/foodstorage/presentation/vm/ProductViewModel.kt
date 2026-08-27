@@ -1,6 +1,5 @@
 package com.example.foodstorage.presentation.vm
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.foodstorage.domain.Product
@@ -32,12 +31,15 @@ class ProductViewModel @Inject constructor(
     private var _sharedFlow = MutableSharedFlow<ProductEvent>()
     val sharedFlow: SharedFlow<ProductEvent> = _sharedFlow
 
-    private var isSaving = false
+    private val _isSaving = MutableStateFlow(false)
 
     private var allProducts = emptyList<Product>()
 
     private val _selectedFilter = MutableStateFlow(STORAGE_PLACE_ALL)
     val selectedFilter: StateFlow<String> = _selectedFilter
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
 
 
     fun loadProducts(showLoading: Boolean) {
@@ -46,18 +48,10 @@ class ProductViewModel @Inject constructor(
                 _state.value = ProductScreenState.Loading
             }
 
-
             try {
                 getAllProductsUseCase.getAllProducts().collect { products ->
                     allProducts = products
-                    Log.d("ALL","allProducts обновился: $allProducts")
-                    if (products.isEmpty()) {
-
-                        _state.value = ProductScreenState.Empty
-
-                    } else {
-                        updateFilter(selectedFilter.value)
-                    }
+                    applyFilters()
                 }
 
             } catch (e: Exception) {
@@ -69,21 +63,21 @@ class ProductViewModel @Inject constructor(
 
     fun addProduct(product: Product) {
         viewModelScope.launch {
-            if (isSaving) {
+            if (_isSaving.value) {
                 return@launch
             }
-            isSaving = true
+            _isSaving.value = true
             val addResult = withContext(Dispatchers.IO) {
                 addProductUseCase.addProduct(product)
             }
             when (addResult) {
                 is RepositoryResult.Success -> {
-                    isSaving = false
+                    _isSaving.value = false
                     _sharedFlow.emit(ProductEvent.ProductSaved)
                 }
 
                 is RepositoryResult.Error -> {
-                    isSaving = false
+                    _isSaving.value = false
                     _state.value = ProductScreenState.Error(addResult.message)
                 }
 
@@ -110,53 +104,73 @@ class ProductViewModel @Inject constructor(
         }
     }
 
-    fun updateFilter(filter: String){
 
-        _selectedFilter.value = filter
-        filterStoragePlace(filter)
+    fun searchText(text: String) {
+        _searchQuery.value = text
+        applyFilters()
     }
 
 
-    fun filterStoragePlace(storagePlace: String) {
+    fun updateFilter(filter: String) {
+        _selectedFilter.value = filter
+        applyFilters()
+    }
 
-        when (storagePlace) {
+    private fun applyFilters() {
 
+        val filteredByPlace = when (_selectedFilter.value) {
             STORAGE_PLACE_ALL -> {
-                productsList(allProducts)
+                allProducts
             }
 
             STORAGE_PLACE_FRIDGE -> {
-                val filterPlaceFridge =
-                    allProducts.filter { it.storagePlace == STORAGE_PLACE_FRIDGE }
-                productsList(filterPlaceFridge)
-
-
+                allProducts.filter { it.storagePlace == STORAGE_PLACE_FRIDGE }
             }
 
             STORAGE_PLACE_SHELF -> {
-                val filterPlaceShelf =
-                    allProducts.filter { it.storagePlace == STORAGE_PLACE_SHELF }
-                productsList(filterPlaceShelf)
+                allProducts.filter { it.storagePlace == STORAGE_PLACE_SHELF }
+            }
+
+            else -> allProducts
+        }
+        val searchQuery = _searchQuery.value
+        val filteredBySearch = if (searchQuery.isEmpty()) {
+            filteredByPlace
+        } else {
+            filteredByPlace.filter { product ->
+                product.name.lowercase().contains(searchQuery.lowercase())
             }
         }
-    }
+
+        when {
+            allProducts.isEmpty() -> {
+                _state.value = ProductScreenState.Empty
+            }
+
+            filteredBySearch.isEmpty() && searchQuery.isNotEmpty() -> {
+                _state.value = ProductScreenState.EmptySearch
+            }
 
 
-    fun productsList(list: List<Product>) {
-        if (list.isEmpty()) {
-            _state.value = ProductScreenState.EmptyFilter
+            filteredByPlace.isEmpty() && _selectedFilter.value != STORAGE_PLACE_ALL -> {
+                _state.value = ProductScreenState.EmptyFilter
+            }
 
-        } else {
-            val expiredProducts =
-                countExpiredProductsUseCase.countExpiredProducts(list)
-            _state.value = ProductScreenState.Products(
-                list,
-                list.size,
-                expiredProducts
-            )
+            filteredBySearch.isNotEmpty() -> {
+                val expiredProducts =
+                    countExpiredProductsUseCase.countExpiredProducts(filteredBySearch)
+                _state.value = ProductScreenState.Products(
+                    filteredBySearch,
+                    filteredBySearch.size,
+                    expiredProducts
+                )
+            }
+
+            else -> {
+                _state.value = ProductScreenState.EmptyFilter
+            }
 
         }
-
     }
 
     companion object {

@@ -7,6 +7,7 @@ sealed class ProductScreenState {
     object Empty : ProductScreenState()
 
     object EmptyFilter : ProductScreenState()
+    object EmptySearch: ProductScreenState()
     data class Products(
         val products: List<Product>,
         val totalProducts: Int,
