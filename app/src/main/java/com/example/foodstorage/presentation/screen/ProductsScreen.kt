@@ -1,6 +1,7 @@
 package com.example.foodstorage.presentation.screen
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -50,6 +51,11 @@ import com.example.foodstorage.presentation.search.EmptySearchState
 import com.example.foodstorage.presentation.search.SearchBarBlock
 import com.example.foodstorage.presentation.vm.ProductScreenState
 import com.example.foodstorage.presentation.vm.ProductViewModel
+import java.time.format.DateTimeFormatter
+import java.util.Locale
+
+
+private val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.ROOT)
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,6 +63,7 @@ import com.example.foodstorage.presentation.vm.ProductViewModel
 fun ProductScreen(
     viewModel: ProductViewModel,
     onAdd: () -> Unit,
+    onUpdate: (Int) -> Unit
 ) {
     val state by viewModel.state.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
@@ -110,7 +117,7 @@ fun ProductScreen(
 
                 FloatingActionButton(
                     onClick = onAdd,
-                    containerColor = MaterialTheme.colorScheme.primary,
+                    containerColor = MaterialTheme.colorScheme.tertiary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 ) {
                     Icon(
@@ -157,6 +164,11 @@ fun ProductScreen(
                         currentState.products,
                         onDelete = { id ->
                             viewModel.deleteProduct(id)
+                        },
+
+                        onUpdate = { id ->
+                            Log.d("EDIT_TEST", "onUpdate id = $id")
+                            onUpdate(id)
                         })
                 }
 
@@ -171,22 +183,6 @@ fun ProductScreen(
         }
     }
 }
-
-@Composable
-fun ProductsList(
-    products: List<Product>,
-    onDelete: (Int) -> Unit
-) {
-
-    LazyColumn(
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(items = products, key = { product -> product.id }) { product ->
-            ProductCard(product, onDelete)
-        }
-    }
-}
-
 
 @Composable
 fun FiltersGroup(
@@ -244,9 +240,27 @@ fun FiltersGroup(
 }
 
 @Composable
+fun ProductsList(
+    products: List<Product>,
+    onDelete: (Int) -> Unit,
+    onUpdate: (Int) -> Unit
+) {
+
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(items = products, key = { product -> product.id }) { product ->
+            ProductCard(product, onDelete, onUpdate = onUpdate)
+        }
+    }
+}
+
+
+@Composable
 fun ProductCard(
     product: Product,
-    onDelete: (Int) -> Unit
+    onDelete: (Int) -> Unit,
+    onUpdate: (Int) -> Unit
 ) {
     val swipeState = rememberSwipeToDismissBoxState(
         positionalThreshold = SwipeToDismissBoxDefaults.positionalThreshold
@@ -297,49 +311,43 @@ fun ProductCard(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
 
                     ) {
-                    Text(
-                        text = product.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                    Column(  modifier = Modifier.weight(1f)) {
+
+                        Text(
+                            text = product.name,
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Text(
+                            text = "Количество: ${product.quantity}",
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        Text(
+                            text = "Срок хранения: ${product.shelfLife.format(formatter)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+
+                    ProductMenuContent(
+                        onUpdate = { onUpdate(product.id) },
+                        onDelete = { onDelete(product.id) }
                     )
-
-                    Text(
-                        text = product.storagePlace,
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-
-                    ) {
-
-                    Text(
-                        text = "${product.quantity}",
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    Text(
-                        text = " До: ${product.shelfLife}",
-                        style = MaterialTheme.typography.titleMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
                 }
 
 
             }
-
         }
+
     }
 
 

@@ -39,6 +39,10 @@ class ProductRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getProductById(id: Int): Product{
+        return dao.getProductById(id).let { mapper.toDomain(it) }
+    }
+
     override suspend fun deleteProduct(id: Int): RepositoryResult<Unit> {
         val deleteRows = dao.delete(id)
         return if (deleteRows == 0) {

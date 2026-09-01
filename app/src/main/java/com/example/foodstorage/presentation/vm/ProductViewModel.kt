@@ -1,5 +1,6 @@
 package com.example.foodstorage.presentation.vm
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.foodstorage.domain.Product
@@ -8,6 +9,8 @@ import com.example.foodstorage.domain.usecase.AddProductUseCase
 import com.example.foodstorage.domain.usecase.CountExpiredProductsUseCase
 import com.example.foodstorage.domain.usecase.DeleteProductUseCase
 import com.example.foodstorage.domain.usecase.GetAllProductsUseCase
+import com.example.foodstorage.domain.usecase.GetProductById
+import com.example.foodstorage.domain.usecase.UpdateProductUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -22,6 +25,8 @@ import javax.inject.Inject
 class ProductViewModel @Inject constructor(
     private val getAllProductsUseCase: GetAllProductsUseCase,
     private val addProductUseCase: AddProductUseCase,
+    private val updateProductUseCase: UpdateProductUseCase,
+    private val getProductById: GetProductById,
     private val deleteProductUseCase: DeleteProductUseCase,
     private val countExpiredProductsUseCase: CountExpiredProductsUseCase
 ) : ViewModel() {
@@ -40,6 +45,10 @@ class ProductViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
+
+    private val _productState  = MutableStateFlow<Product?>(null)
+    val productState : StateFlow<Product?> = _productState
+
 
 
     fun loadProducts(showLoading: Boolean) {
@@ -86,6 +95,42 @@ class ProductViewModel @Inject constructor(
         }
     }
 
+
+    fun updateProduct(product: Product) {
+        viewModelScope.launch {
+            if (_isSaving.value) {
+                return@launch
+            }
+            _isSaving.value = true
+            val updateResult = withContext(Dispatchers.IO) {
+                updateProductUseCase.updateProduct(product)
+            }
+            when (updateResult) {
+                is RepositoryResult.Success -> {
+                    _isSaving.value = false
+                    _sharedFlow.emit(ProductEvent.ProductSaved)
+                }
+
+                is RepositoryResult.Error -> {
+                    _isSaving.value = false
+                    _state.value = ProductScreenState.Error(updateResult.message)
+                }
+
+            }
+        }
+    }
+
+
+    fun getProductById(id: Int) {
+
+        viewModelScope.launch {
+            val product =  withContext(Dispatchers.IO) {
+                getProductById.getProductById(id)
+            }
+            _productState.value = product
+        }
+    }
+
     fun deleteProduct(id: Int) {
 
         viewModelScope.launch {
@@ -102,6 +147,11 @@ class ProductViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun clearProduct(){
+        Log.d("EDIT_TEST", "clearProduct()")
+        _productState.value = null
     }
 
 

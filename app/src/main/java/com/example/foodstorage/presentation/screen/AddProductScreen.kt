@@ -1,6 +1,7 @@
 package com.example.foodstorage.presentation.screen
 
 import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -28,6 +30,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,32 +40,75 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.foodstorage.domain.Product
+import com.example.foodstorage.presentation.vm.ProductViewModel
 import com.example.foodstorage.ui.theme.FoodStorageTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.util.Locale
 
-
-private val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+private val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy", Locale.ROOT)
 private val options = listOf("Холодильник", "Полка")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddProductScreen(
-    selectedLocation: String = "",
+    selectedLocation: String,
     onLocationChange: (String) -> Unit,
-    onSave: (Product) -> Unit = {},
-    onBack: () -> Unit = {},
+    onSave: (Product) -> Unit,
+    onUpdate: (Product) -> Unit,
+    onBack: () -> Unit,
+    productId: Int,
+    isEditMode: Boolean,
+    viewModel: ProductViewModel
 ) {
+
 
     var productName by remember { mutableStateOf("") }
     var productQuantity by remember { mutableStateOf("") }
     var productShelfLife by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
+    val product by viewModel.productState.collectAsState()
 
     val context = LocalContext.current
+
+    LaunchedEffect(productId) {
+
+        Log.d("EDIT_TEST", "productId = $productId, isEditMode = $isEditMode")
+        if (isEditMode) {
+            viewModel.getProductById(productId)
+        }else{
+            viewModel.clearProduct()
+        }
+    }
+
+    LaunchedEffect(product) {
+        Log.d("EDIT_TEST", "product in UI = $product")
+
+        if (product == null) {
+            productName =""
+            productQuantity = ""
+            productShelfLife = ""
+            onLocationChange("")
+
+
+        }else{
+            product?.let { p ->
+                productName = p.name
+                productQuantity = p.quantity.toString()
+                productShelfLife = p.shelfLife.format(formatter)
+                onLocationChange(p.storagePlace)
+
+            }
+        }
+
+
+    }
+
+
 
     FoodStorageTheme {
         Scaffold(
@@ -226,74 +273,111 @@ fun AddProductScreen(
                     }
                 }
 
+                Row(
+                    modifier = Modifier,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
 
-                Button(
 
-                    onClick = {
+                    Button(
 
-                        if (productName.isBlank()) {
-                            displayToast(context, "Заполните название продукта")
-                            return@Button
-                        }
+                        onClick = {
 
-                        val productQuantityDouble = productQuantity.toDoubleOrNull()
-                        if (productQuantity.isBlank() || productQuantityDouble == null
-                            || productQuantityDouble <= 0
-                        ) {
-                            displayToast(context, "Введите количество")
-                            return@Button
-                        }
-
-                        var productShelfLifeLD: LocalDate
-                        val today = LocalDate.now()
-
-                        if (productShelfLife.isBlank()) {
-                            displayToast(context, "Введите срок годности")
-                            return@Button
-
-                        } else {
-                            productShelfLifeLD = try {
-
-                                LocalDate.parse(productShelfLife, formatter)
-
-                            } catch (e: DateTimeParseException) {
-                                displayToast(context, "Заполните дату в формате дд.мм.гггг")
+                            if (productName.isBlank()) {
+                                displayToast(context, "Заполните название продукта")
                                 return@Button
                             }
-                        }
 
-                        if (productShelfLifeLD <= today) {
+                            val productQuantityDouble = productQuantity.toDoubleOrNull()
+                            if (productQuantity.isBlank() || productQuantityDouble == null
+                                || productQuantityDouble <= 0
+                            ) {
+                                displayToast(context, "Введите количество")
+                                return@Button
+                            }
 
-                            displayToast(context, "Проверьте срок годности")
-                            return@Button
-                        }
+                            var productShelfLifeLD: LocalDate
+                            val today = LocalDate.now()
+
+                            if (productShelfLife.isBlank()) {
+                                displayToast(context, "Введите срок годности")
+                                return@Button
+
+                            } else {
+                                productShelfLifeLD = try {
+                                    LocalDate.parse(productShelfLife, formatter)
+
+                                } catch (e: DateTimeParseException) {
+                                    displayToast(context, "Заполните дату в формате дд.мм.гггг")
+                                    return@Button
+                                }
+                            }
+
+                            if (productShelfLifeLD <= today) {
+
+                                displayToast(context, "Проверьте срок годности")
+                                return@Button
+                            }
 
 
-                        if (selectedLocation.isBlank()) {
-                            displayToast(context, "Выберите место хранения")
-                            return@Button
-                        }
+                            if (selectedLocation.isBlank()) {
+                                displayToast(context, "Выберите место хранения")
+                                return@Button
+                            }
+
+                            if (isEditMode) {
+                                onUpdate(
+                                    Product(
+                                        productId,
+                                        name = productName,
+                                        quantity = productQuantityDouble,
+                                        storagePlace = selectedLocation,
+                                        shelfLife = productShelfLifeLD
+                                    )
+                                )
+
+                            } else {
 
 
-                        onSave(
-                            Product(
-                                0,
-                                name = productName,
-                                quantity = productQuantityDouble,
-                                storagePlace = selectedLocation,
-                                shelfLife = productShelfLifeLD
-                            )
+                                onSave(
+                                    Product(
+                                        0,
+                                        name = productName,
+                                        quantity = productQuantityDouble,
+                                        storagePlace = selectedLocation,
+                                        shelfLife = productShelfLifeLD
+                                    )
 
+                                )
+                            }
+
+
+                        },
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .padding(top = 16.dp)
+                    ) {
+                        Text("Сохранить")
+
+                    }
+
+                    Button(
+                        onClick = onBack,
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .padding(top = 16.dp),
+                        colors = ButtonColors(
+                            containerColor = MaterialTheme.colorScheme.onError,
+                            contentColor = MaterialTheme.colorScheme.background,
+                            disabledContainerColor = MaterialTheme.colorScheme.onError,
+                            MaterialTheme.colorScheme.background
                         )
-                    },
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .padding(top = 16.dp)
-                ) {
-                    Text("Сохранить")
+
+                    ) {
+                        Text("Отменить", textAlign = TextAlign.Center)
+                    }
 
                 }
-
             }
         }
     }
